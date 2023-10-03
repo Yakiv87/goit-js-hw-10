@@ -16,6 +16,7 @@ loader.classList.replace('loader', 'is-hidden');
 error.classList.add('is-hidden');
 divCatInfo.classList.add('is-hidden');
 
+
 let arrBreedsId = [];
 fetchBreeds()
 .then(data => {
