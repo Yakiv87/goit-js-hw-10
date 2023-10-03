@@ -83,6 +83,9 @@ h1 {
     gap: 40px;
     background-color: #e5f3f2;
     border: 1px solid #0d161b;
+    margin-left: auto;
+    margin-right: auto;
+    width: fit-content;
 }
 
 .box-img {
