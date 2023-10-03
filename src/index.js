@@ -1,58 +1,70 @@
 import { fetchBreeds, fetchCatByBreed } from "./cat-api";
+import './styles.css';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import SlimSelect from 'slim-select'
+import 'slim-select/dist/slimselect.css';
 
-const breedSelect = document.querySelector(".breed-select");
-const loader = document.querySelector(".loader");
-const catInfo = document.querySelector(".cat-info");
-const breedName = document.querySelector(".breed-name");
-const description = document.querySelector(".description");
-const temperament = document.querySelector(".temperament");
-const error = document.querySelector(".error");
+const ref = {
+    selector: document.querySelector('.breed-select'),
+    divCatInfo: document.querySelector('.cat-info'),
+    loader: document.querySelector('.loader'),
+    error: document.querySelector('.error'),
+};
+const { selector, divCatInfo, loader, error } = ref;
 
-window.addEventListener("DOMContentLoaded", () => {
-        loader.style.display = "block";
-        fetchBreeds()
-        .then(data => {
-            // вибір пород
-            data.forEach(breed => {
-                const option = document.createElement("option");
-                option.value = breed.id;
-                option.textContent = breed.name;
-                breedSelect.appendChild(option);
-            });
-            loader.style.display = "none";
-        })
-        .catch(err => {
-            //  повідомлення про помилку
-            error.style.display = "block";
-            console.error("Помилка завантаження списку порід:", err);
-        });
-});
-breedSelect.addEventListener("change", () => {
-    const selectedBreedId = breedSelect.value;
+loader.classList.replace('loader', 'is-hidden');
+error.classList.add('is-hidden');
+divCatInfo.classList.add('is-hidden');
+
+let arrBreedsId = [];
+fetchBreeds()
+.then(data => {
+    data.forEach(element => {
+        arrBreedsId.push({text: element.name, value: element.id});
+    });
+    new SlimSelect({
+        select: selector,
+        data: arrBreedsId
+    });
+    })
+.catch(onFetchError);
+
+selector.addEventListener('change', onSelectBreed);
+
+function onSelectBreed(event) {
+    loader.classList.replace('is-hidden', 'loader');
+    selector.classList.add('is-hidden');
+    divCatInfo.classList.add('is-hidden');
+
+    const breedId = event.currentTarget.value;
+    fetchCatByBreed(breedId)
+    .then(data => {
+        loader.classList.replace('loader', 'is-hidden');
+        selector.classList.remove('is-hidden');
+        const { url, breeds } = data[0];
+        
+        divCatInfo.innerHTML = `<div class="box-img"><img src="${url}" alt="${breeds[0].name}" width="400"/></div><div class="box"><h1>${breeds[0].name}</h1><p>${breeds[0].description}</p><p><b>Temperament:</b> ${breeds[0].temperament}</p></div>`
+        divCatInfo.classList.remove('is-hidden');
+    })
+    .catch(onFetchError);
+};
+
+function onFetchError(error) {
+    selector.classList.remove('is-hidden');
+    loader.classList.replace('loader', 'is-hidden');
+
+    Notify.failure('Oops! Something went wrong! Try reloading the page or select another cat breed!', {
+        position: 'center-center',
+        timeout: 5000,
+        width: '400px',
+        fontSize: '24px'
+    });
+};
+   
+
+
+
+
+
+
     
-    // завантажувач
-    loader.style.display = "block";
-     
-    catInfo.style.display = "none";
-
-    //  інформація про кота за породою
-    fetchCatByBreed(selectedBreedId)
-        .then(data => {
-            const catData = data[0];
-
-            // Відображаємо інформацію 
-            breedName.textContent = catData.breeds[0].name;
-            description.textContent = catData.breeds[0].description;
-            temperament.textContent = catData.breeds[0].temperament;
-            catInfo.style.display = "block";
-            
-            // Вимикаємо завантажувач
-            loader.style.display = "none";
-        })
-        .catch(err => {
-            // повідомлення про помилку
-            error.style.display = "block";
-            console.error("Помилка завантаження інформації про кота:", err);
-        });
-});
