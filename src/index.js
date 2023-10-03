@@ -1,16 +1,58 @@
-/* live_yBkvF9Z54eQk85lwMo4K0kjH7Kd6OwpCTWP5G4DmYCsSMpoZFe3KuHRk7QIQI0cA
- 
-import axios from "axios";
+import { fetchBreeds, fetchCatByBreed } from "./cat-api";
+import SlimSelect from 'slim-select'
 
-axios.defaults.headers.common["x-api-key"] = "live_yBkvF9Z54eQk85lwMo4K0kjH7Kd6OwpCTWP5G4DmYCsSMpoZFe3KuHRk7QIQI0cA";
-*/
-fetch('https://api.thecatapi.com/v1/breeds')
-.then((resp) => {
+const breedSelect = document.querySelector(".breed-select");
+const loader = document.querySelector(".loader");
+const catInfo = document.querySelector(".cat-info");
+const breedName = document.querySelector(".breed-name");
+const description = document.querySelector(".description");
+const temperament = document.querySelector(".temperament");
+const error = document.querySelector(".error");
 
-if(!resp.ok) {
-    throw new Error('foll');
-}
-return resp.json(); 
-})
-.then((data) => console.log(data))
-.cath((err) => console.log(err)); 
+window.addEventListener("DOMContentLoaded", () => {
+        loader.style.display = "block";
+        fetchBreeds()
+        .then(data => {
+            // вибір пород
+            data.forEach(breed => {
+                const option = document.createElement("option");
+                option.value = breed.id;
+                option.textContent = breed.name;
+                breedSelect.appendChild(option);
+            });
+            loader.style.display = "none";
+        })
+        .catch(err => {
+            //  повідомлення про помилку
+            error.style.display = "block";
+            console.error("Помилка завантаження списку порід:", err);
+        });
+});
+breedSelect.addEventListener("change", () => {
+    const selectedBreedId = breedSelect.value;
+    
+    // завантажувач
+    loader.style.display = "block";
+     
+    catInfo.style.display = "none";
+
+    //  інформація про кота за породою
+    fetchCatByBreed(selectedBreedId)
+        .then(data => {
+            const catData = data[0];
+
+            // Відображаємо інформацію 
+            breedName.textContent = catData.breeds[0].name;
+            description.textContent = catData.breeds[0].description;
+            temperament.textContent = catData.breeds[0].temperament;
+            catInfo.style.display = "block";
+            
+            // Вимикаємо завантажувач
+            loader.style.display = "none";
+        })
+        .catch(err => {
+            // повідомлення про помилку
+            error.style.display = "block";
+            console.error("Помилка завантаження інформації про кота:", err);
+        });
+});
